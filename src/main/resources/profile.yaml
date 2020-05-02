@@ -1,0 +1,187 @@
+---
+openapi: 3.0.2
+info:
+  title: ProfileDataService
+  version: 1.0.0
+  description: For the Red Rover Project, this is the API set for the profile data
+    service.  The profile information represents the Red Rover 'user' that logs in
+    and manages rosters (lists) of information.
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: NAPS AppDev Factory
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+paths:
+  /profile/{kerberos_id}:
+    summary: Get Profile by KerberosId.
+    description: The kerberos_id is unique across the profiles.
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+              examples:
+                jdoe:
+                  value:
+                    id: d7e1bc6b-b659-432d-b346-29f3a530bfa9
+                    kerberos_id: jdoe
+                    last_logged_in: 2020-04-23T18:25:43.511Z
+                    profile_attributes:
+                    - key: email
+                      value: jdoe@abc.com
+                    - key: name
+                      value: jane doe
+          description: profile response
+      operationId: findProfileByKerberosId
+      summary: Retrieve profile attributes
+      description: "Returns a profile based on a single KerberosId.\nQ:  If there\
+        \ is no profile matching the KerberosId, will one be inserted?  "
+    parameters:
+    - examples:
+        Profile for Jane Doe who is identified by jdoe:
+          value: jdoe
+      name: kerberos_id
+      description: Unique Kerberos Identifier
+      schema:
+        type: string
+      in: path
+      required: true
+  /profile/attribute/{kerberos_id}/{attribute}:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profile_attribute_add'
+            examples:
+              Add email for Jane Doe:
+                value:
+                  kerberos_id: jdoe
+                  profile_attribute:
+                    key: email
+                    value: jdoe@abc.com
+        required: true
+      parameters:
+      - name: kerberos_id
+        description: Kerberos Id
+        schema:
+          type: string
+        in: path
+        required: true
+      - examples:
+          JaneDoe:
+            value: jdoe
+        name: attribute
+        description: Key to be updated
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "200":
+          description: ok
+      summary: Add ONE attribute key-value
+    delete:
+      parameters:
+      - examples:
+          Jane Doe's Email Id:
+            value: jdoe
+        name: kerberos_id
+        description: Kerberos Id
+        schema:
+          type: string
+        in: path
+        required: true
+      - examples:
+          Email attribute (key):
+            value: email
+        name: attribute
+        description: Name of the attribute to update
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "200":
+          description: assume deleted
+      summary: Delete ONE named attribute
+components:
+  schemas:
+    Error:
+      required:
+      - code
+      - message
+      properties:
+        code:
+          format: int32
+          type: integer
+        message:
+          type: string
+    Profile_attribute:
+      title: Root Type for Profile_attribute
+      description: Attributes of key-value pairs.
+      type: object
+      example:
+        key: email
+        value: jdoe@abc.com
+    Profile:
+      title: Root Type for profile
+      description: |-
+        A profile contains the kerberos id AND attributes (key/value pairs.)
+        Q:  The DB has last_logged_in in the attribute table, should it be in the profile table?
+      required:
+      - kerberos_id
+      - profile_attributes
+      - id
+      type: object
+      properties:
+        id:
+          description: UUID key
+          type: string
+        kerberos_id:
+          description: Kerberos Identifier
+          type: string
+        profile_attributes:
+          description: Array of key-value pairs
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile_attribute'
+      example:
+        id: d7e1bc6b-b659-432d-b346-29f3a530bfa9
+        kerberos_id: jdoe
+        last_logged_in: 2020-04-23T18:25:43.511Z
+        profile_attributes:
+        - key: email
+          value: jdoe@abc.com
+        - key: name
+          value: jane doe
+    Profile_attribute_add:
+      title: Root Type for profile
+      description: |-
+        A profile contains the kerberos id AND attributes (key/value pairs.)
+        Q:  The DB has last_logged_in in the attribute table, should it be in the profile table?
+      required:
+      - kerberos_id
+      - profile_attributes
+      type: object
+      properties:
+        kerberos_id:
+          description: Kerberos Identifier
+          type: string
+        profile_attributes:
+          $ref: '#/components/schemas/Profile_attribute'
+          description: One key-value pair
+      example:
+        kerberos_id: jdoe
+        profile_attribute:
+          key: email
+          value: jdoe@abc.com
